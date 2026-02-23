@@ -1,50 +1,42 @@
-import { useState } from 'react'
 import Header from './components/Header'
 import PromptInput from './components/PromptInput'
 import DesignBreakdown from './components/DesignBreakdown'
 import VisualConcept from './components/VisualConcept'
 import LoadingState from './components/LoadingState'
+import Sidebar from './components/Sidebar'
+import Toast from './components/Toast'
+import useStore from './store'
+import { useState } from 'react'
 
 function App() {
-  const [brief, setBrief] = useState(null)
-  const [visual, setVisual] = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [visualLoading, setVisualLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const [step, setStep] = useState(0) // 0=idle, 1=analyzing, 2=brief done, 3=visual done
+  const { brief, visual, loading, visualLoading, error, step,
+    setBrief, setVisual, setLoading, setVisualLoading,
+    setError, setStep, reset, saveProject } = useStore()
+  const [lastPrompt, setLastPrompt] = useState('')
+  const [toast, setToast] = useState(null)
+
+  const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2500) }
 
   const analyze = async (prompt) => {
-    setLoading(true)
-    setError(null)
-    setBrief(null)
-    setVisual(null)
-    setStep(1)
-
+    setLoading(true); setError(null); setBrief(null); setVisual(null); setStep(1); setLastPrompt(prompt)
     try {
       const res = await fetch('/api/analyze-design', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt })
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
-      setBrief(data.brief)
-      setStep(2)
+      setBrief(data.brief); setStep(2)
       generateVisual(data.brief.imagePrompt, data.brief.colorPalette)
-    } catch (err) {
-      setError(err.message)
-      setStep(0)
-    } finally {
-      setLoading(false)
-    }
+    } catch (err) { setError(err.message); setStep(0) }
+    finally { setLoading(false) }
   }
 
   const generateVisual = async (imagePrompt, colorPalette) => {
     setVisualLoading(true)
     try {
       const res = await fetch('/api/generate-visual', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ imagePrompt, colorPalette })
       })
       const data = await res.json()
@@ -53,44 +45,49 @@ function App() {
     finally { setVisualLoading(false) }
   }
 
-  const reset = () => {
-    setBrief(null); setVisual(null); setError(null)
-    setLoading(false); setVisualLoading(false); setStep(0)
+  const handleSave = () => {
+    saveProject(lastPrompt)
+    showToast('Project saved')
   }
+
+  const handleReset = () => { reset(); setLastPrompt('') }
 
   return (
     <div className="min-h-screen relative">
-      {/* Background effects */}
+      <Sidebar />
+
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-50-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-white/[0.01] blur-[120px]"></div>
-        <div className="absolute bottom-[-100px] left-[-100px] w-[400px] h-[400px] rounded-full bg-white/[0.008] blur-[100px]"></div>
+        <div className="absolute -top-48 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.015) 0%, transparent 70%)' }}></div>
       </div>
 
       <div className="relative z-10">
         <Header step={step} />
 
         <main className="max-w-3xl mx-auto px-5 sm:px-8 pb-32">
-          <PromptInput onAnalyze={analyze} loading={loading} onReset={reset} hasBrief={!!brief} />
+          <PromptInput onAnalyze={analyze} loading={loading} onReset={handleReset} hasBrief={!!brief} />
 
           {error && (
-            <div className="mt-8 card-flat p-4 text-center fade border-red-500/20">
-              <p className="text-red-400/70 text-sm">{error}</p>
+            <div className="mt-8 card-flat p-4 text-center fade" style={{ borderColor: 'rgba(239,68,68,0.2)' }}>
+              <p className="text-red-400 text-sm opacity-70">{error}</p>
             </div>
           )}
 
           {loading && <LoadingState text="Thinking through your design..." />}
 
-          {brief && !loading && <DesignBreakdown brief={brief} />}
+          {brief && !loading && (
+            <DesignBreakdown brief={brief} onSave={handleSave} showToast={showToast} />
+          )}
 
           {visualLoading && <LoadingState text="Crafting visual concept..." />}
-
           {visual && !visualLoading && <VisualConcept visual={visual} />}
         </main>
 
-        <footer className="text-center py-10 border-t border-[var(--color-border)]">
-          <p className="text-[var(--color-text-faint)] text-[11px] tracking-widest uppercase">Aurora · Hackathon 2025</p>
+        <footer className="text-center py-10" style={{ borderTop: '1px solid #232329' }}>
+          <p className="text-xs tracking-widest uppercase" style={{ color: '#3f3f46' }}>Aurora · Hackathon 2025</p>
         </footer>
       </div>
+
+      {toast && <Toast message={toast} />}
     </div>
   )
 }

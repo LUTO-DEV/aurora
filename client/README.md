@@ -1,55 +1,48 @@
-# ✦ AURORA — AI Design Partner
+# ✦ Aurora — AI Design Partner
 
-> "Most AI tools generate visuals. AURORA generates design thinking first."
+> Most AI tools generate visuals. Aurora generates design thinking first.
 
-## 🌌 Vision
+## What It Does
 
-AURORA is an AI-powered design partner that helps you **think like a designer** before generating visuals. Instead of jumping straight to image generation, AURORA first analyzes your design goal, creates a structured design brief with strategic reasoning, and then generates a visual concept — just like a real creative director would.
+Aurora is an AI-powered design partner that analyzes your design goal, creates a strategic design brief, and generates a visual concept — the way a creative director would approach a project.
 
-## 🧠 The Problem
+### Features
+- **AI Design Analysis** — Structured briefs with audience, tone, colors, typography, layout
+- **Live Visual Mockup** — Dynamic wireframe using your AI-generated color palette
+- **Copy Hex Codes** — Click any color to copy
+- **Save Projects** — Save and revisit past design briefs
+- **Export to PDF** — Download briefs as professional documents
+- **Project History** — Sidebar with all saved projects
 
-Current AI design tools skip the most important part of design: **thinking**. They generate pretty images without understanding context, audience, or strategy. This leads to designs that look good but don't communicate effectively.
+## Tech Stack
 
-## 💡 How It Works
-
-1. **Define Your Goal** — Describe what you're designing and who it's for
-2. **AI Design Brief** — AURORA analyzes your goal and creates a structured brief including:
-   - Target audience analysis
-   - Tone & brand personality
-   - Color palette with hex codes and usage reasoning
-   - Typography recommendations
-   - Layout structure
-   - UX reasoning explaining *why* these choices work
-3. **Visual Concept** — A generated visual concept with wireframe mockup using your palette
-
-## 🛠 Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Frontend | React (Vite) + Tailwind CSS v4 |
+| Layer | Tech |
+|-------|------|
+| Frontend | React + Vite + Tailwind v3 |
+| State | Zustand |
 | Backend | Node.js + Express |
-| AI | Groq API (Llama 3.1 — free tier) |
-| Styling | Glass morphism, dark theme, custom animations |
+| AI | Groq API (Llama 3.1 — free) |
+| Export | html2canvas + jsPDF |
 
-## 🚀 Setup
+## Setup
 
 ### Prerequisites
 - Node.js 18+
-- Groq API key (free at https://console.groq.com)
+- Free API key from [console.groq.com](https://console.groq.com)
 
-### Installation
+### Install & Run
 
 ```bash
-# Clone the repo
-git clone https://github.com/yourusername/aurora.git
+git clone https://github.com/YOUR_USERNAME/aurora.git
 cd aurora
 
-# Setup backend
+# Backend
 cd server
 npm install
-cp .env.example .env
-# Edit .env and add your GROQ_API_KEY
+cp .env.example .env  # Add your GROQ_API_KEY
+node server.js
 
-# Setup frontend
-cd ../client
+# Frontend (new terminal)
+cd client
 npm install
+npx vite
