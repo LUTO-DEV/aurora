@@ -3,6 +3,7 @@ import Header from './components/Header'
 import PromptInput from './components/PromptInput'
 import DesignBreakdown from './components/DesignBreakdown'
 import VisualConcept from './components/VisualConcept'
+import LoadingState from './components/LoadingState'
 
 function App() {
   const [brief, setBrief] = useState(null)
@@ -10,12 +11,14 @@ function App() {
   const [loading, setLoading] = useState(false)
   const [visualLoading, setVisualLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [step, setStep] = useState(0) // 0=idle, 1=analyzing, 2=brief done, 3=visual done
 
   const analyze = async (prompt) => {
     setLoading(true)
     setError(null)
     setBrief(null)
     setVisual(null)
+    setStep(1)
 
     try {
       const res = await fetch('/api/analyze-design', {
@@ -26,9 +29,11 @@ function App() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       setBrief(data.brief)
+      setStep(2)
       generateVisual(data.brief.imagePrompt, data.brief.colorPalette)
     } catch (err) {
       setError(err.message)
+      setStep(0)
     } finally {
       setLoading(false)
     }
@@ -43,61 +48,49 @@ function App() {
         body: JSON.stringify({ imagePrompt, colorPalette })
       })
       const data = await res.json()
-      if (res.ok) setVisual(data.visual)
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setVisualLoading(false)
-    }
+      if (res.ok) { setVisual(data.visual); setStep(3) }
+    } catch (err) { console.error(err) }
+    finally { setVisualLoading(false) }
   }
 
   const reset = () => {
-    setBrief(null)
-    setVisual(null)
-    setError(null)
-    setLoading(false)
-    setVisualLoading(false)
+    setBrief(null); setVisual(null); setError(null)
+    setLoading(false); setVisualLoading(false); setStep(0)
   }
 
   return (
-    <div className="min-h-screen">
-      <Header />
+    <div className="min-h-screen relative">
+      {/* Background effects */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute -top-50-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-white/[0.01] blur-[120px]"></div>
+        <div className="absolute bottom-[-100px] left-[-100px] w-[400px] h-[400px] rounded-full bg-white/[0.008] blur-[100px]"></div>
+      </div>
 
-      <main className="max-w-4xl mx-auto px-5 pb-24">
-        <PromptInput onAnalyze={analyze} loading={loading} onReset={reset} hasBrief={!!brief} />
+      <div className="relative z-10">
+        <Header step={step} />
 
-        {error && (
-          <div className="mt-6 p-4 rounded-xl bg-red-500/5 border border-red-500/20 text-red-400/80 text-sm text-center anim-fade">
-            {error}
-          </div>
-        )}
+        <main className="max-w-3xl mx-auto px-5 sm:px-8 pb-32">
+          <PromptInput onAnalyze={analyze} loading={loading} onReset={reset} hasBrief={!!brief} />
 
-        {loading && (
-          <div className="mt-16 text-center anim-fade">
-            <div className="inline-flex items-center gap-3 text-white/40 text-sm">
-              <div className="w-4 h-4 border-2 border-white/20 border-t-white/60 rounded-full animate-spin"></div>
-              Analyzing your design goal...
+          {error && (
+            <div className="mt-8 card-flat p-4 text-center fade border-red-500/20">
+              <p className="text-red-400/70 text-sm">{error}</p>
             </div>
-          </div>
-        )}
+          )}
 
-        {brief && <DesignBreakdown brief={brief} />}
+          {loading && <LoadingState text="Thinking through your design..." />}
 
-        {visualLoading && (
-          <div className="mt-8 text-center anim-fade">
-            <div className="inline-flex items-center gap-3 text-white/30 text-sm">
-              <div className="w-3 h-3 border-2 border-white/15 border-t-white/50 rounded-full animate-spin"></div>
-              Crafting visual concept...
-            </div>
-          </div>
-        )}
+          {brief && !loading && <DesignBreakdown brief={brief} />}
 
-        {visual && <VisualConcept visual={visual} />}
-      </main>
+          {visualLoading && <LoadingState text="Crafting visual concept..." />}
 
-      <footer className="text-center py-8 text-white/15 text-xs border-t border-white/5">
-        AURORA — Hackathon 2025
-      </footer>
+          {visual && !visualLoading && <VisualConcept visual={visual} />}
+        </main>
+
+        <footer className="text-center py-10 border-t border-[var(--color-border)]">
+          <p className="text-[var(--color-text-faint)] text-[11px] tracking-widest uppercase">Aurora · Hackathon 2025</p>
+        </footer>
+      </div>
     </div>
   )
 }
