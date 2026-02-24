@@ -9,228 +9,229 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(cors({
-    origin: [
-        'http://localhost:5173',
-        'http://localhost:4173',
-        process.env.FRONTEND_URL || '*'
-    ],
-    methods: ['GET', 'POST'],
-    credentials: true
+  origin: [
+    'http://localhost:5173',
+    'http://localhost:4173',
+    process.env.FRONTEND_URL || '*'
+  ],
+  methods: ['GET', 'POST'],
+  credentials: true
 }));
 
 app.use(express.json());
 
 let groq;
 try {
-    groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-    console.log('Groq ready');
+  groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+  console.log('Groq ready');
 } catch (err) {
-    console.error('Groq init failed:', err.message);
+  console.error('Groq init failed:', err.message);
 }
 
 app.get('/', (req, res) => res.json({ status: 'Aurora API running' }));
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
-// ============================================
-// ANALYZE - The main brain
-// ============================================
 app.post('/api/analyze-design', async (req, res) => {
-    try {
-        const { prompt } = req.body;
-        if (!prompt?.trim()) return res.status(400).json({ error: 'Provide a design goal.' });
-        if (!groq) return res.status(500).json({ error: 'AI not configured.' });
+  try {
+    const { prompt } = req.body;
+    if (!prompt?.trim()) return res.status(400).json({ error: 'Provide a design goal.' });
+    if (!groq) return res.status(500).json({ error: 'AI not configured.' });
 
-        const systemPrompt = `You are AURORA, a senior design strategist with 20 years at agencies like Pentagram, IDEO, and Fantasy. You think deeply about WHY design decisions matter — not just what looks good.
+    const systemPrompt = `You are AURORA, a world-class creative director. You don't just pick colors — you craft visual identities that EXPRESS what a brand IS.
 
-When analyzing a design goal, think through these steps:
-1. WHO is the user? What do they care about? What are their pain points?
-2. WHAT emotion should the design evoke? Why?
-3. HOW do color choices connect to psychology and the brand's goals?
-4. WHY does the typography choice support readability AND brand personality?
-5. WHAT layout pattern best serves the user's journey?
+Your job: Given a design goal, create a design brief that makes the design FEEL like the product.
 
-Return ONLY valid JSON. No markdown. No backticks. No explanation outside JSON.
+CRITICAL THINKING RULES:
+- Colors should come FROM the brand's world. A nature app gets earthy greens. A horror game gets dark reds and blacks. A kids' toy brand gets bright playful colors. Don't just pick "nice" colors — pick MEANINGFUL colors.
+- The layout should match the CONTENT TYPE. An ecommerce app has product grids. A music app has album art and players. A news site has article cards. A portfolio has full-bleed images.
+- Typography should match the PERSONALITY. A luxury brand gets elegant serifs. A tech startup gets clean sans-serifs. A gaming platform gets bold display fonts.
+- Think about what IMAGES and VISUAL ELEMENTS would appear. A food delivery app shows food photos. A travel app shows destinations. A fitness app shows workout imagery.
 
-Required structure:
+Return ONLY valid JSON. No markdown. No backticks.
+
+IMPORTANT: The "projectType" field determines the mockup layout. Choose the BEST match:
+- "landing" = marketing landing page
+- "ecommerce" = product shop / store
+- "dashboard" = data / analytics / admin
+- "social" = social media / feed / community
+- "media" = streaming / music / video / content
+- "portfolio" = creative / showcase / gallery
+- "blog" = articles / news / magazine
+- "app" = mobile app / utility / tool
+- "saas" = software product / platform
+
+JSON structure:
 {
-  "projectTitle": "Creative but professional project name",
-  "summary": "2-3 sentence strategic overview of the design direction and why it works",
+  "projectTitle": "Creative name that captures the brand essence",
+  "summary": "2-3 sentences about the design direction. Explain WHY these choices express what the product IS.",
+  "projectType": "one of: landing, ecommerce, dashboard, social, media, portfolio, blog, app, saas",
   "targetAudience": {
-    "primary": "Specific audience description",
+    "primary": "Specific audience",
     "ageRange": "Age range",
-    "psychographics": "Their values, fears, motivations, and digital behavior",
-    "painPoints": "What frustrates them about existing solutions",
-    "designImplication": "How understanding this audience shapes our design choices"
+    "psychographics": "Values and behaviors",
+    "painPoints": "Their frustrations",
+    "designImplication": "How this shapes our visual choices"
   },
   "toneAndPersonality": {
-    "primary": "Primary tone (one word)",
-    "secondary": "Secondary tone (one word)",
-    "brandVoice": "How the brand speaks — specific example sentence",
-    "emotionalGoal": "What emotion should users feel within the first 5 seconds",
-    "reasoning": "Why this tone works for this specific audience and goal"
+    "primary": "Primary tone word",
+    "secondary": "Secondary tone word",
+    "brandVoice": "Example sentence in the brand's voice",
+    "emotionalGoal": "The feeling users get in 5 seconds",
+    "reasoning": "Why this tone expresses what the product is"
   },
   "colorPalette": [
     {
       "name": "Primary",
-      "hex": "#hexcode",
-      "usage": "Where and how to use this color",
-      "psychology": "Why this color works — connect to color psychology and the brand goal"
+      "hex": "#hex",
+      "usage": "Where to use",
+      "reasoning": "Why this specific color expresses the brand — connect to the product's world, not generic color theory"
     },
     {
       "name": "Secondary",
-      "hex": "#hexcode",
-      "usage": "Where and how to use this color",
-      "psychology": "Why this color works"
+      "hex": "#hex",
+      "usage": "Where to use",
+      "reasoning": "Why this color"
     },
     {
       "name": "Accent",
-      "hex": "#hexcode",
-      "usage": "Where and how to use this color",
-      "psychology": "Why this color works"
+      "hex": "#hex",
+      "usage": "Where to use",
+      "reasoning": "Why this color"
     },
     {
       "name": "Background",
-      "hex": "#hexcode",
-      "usage": "Where and how to use this color",
-      "psychology": "Why this color works"
+      "hex": "#hex",
+      "usage": "Where to use",
+      "reasoning": "Why this color"
     },
     {
       "name": "Text",
-      "hex": "#hexcode",
-      "usage": "Where and how to use this color",
-      "psychology": "Why this color works"
+      "hex": "#hex",
+      "usage": "Where to use",
+      "reasoning": "Why this color"
     }
   ],
   "typography": {
-    "headingFont": "Specific Google Font name",
-    "bodyFont": "Specific Google Font name",
-    "style": "Typography personality and feel",
-    "reasoning": "Why these fonts pair well and serve the brand — mention readability, personality, and hierarchy",
-    "scale": "Recommended type scale (e.g., 1.25 major third)"
+    "headingFont": "Real Google Font",
+    "bodyFont": "Real Google Font",
+    "style": "Typography feel",
+    "reasoning": "Why these fonts express the brand personality",
+    "scale": "Type scale ratio"
   },
   "layoutStructure": {
-    "sections": ["Section 1", "Section 2", "Section 3", "Section 4", "Section 5"],
-    "heroStyle": "Specific hero approach and why",
-    "ctaStrategy": "CTA placement, wording style, and conversion reasoning",
-    "userFlow": "Describe the ideal user journey from landing to conversion",
-    "reasoning": "Why this layout structure serves the goal better than alternatives"
+    "sections": ["Section 1 with description", "Section 2", "Section 3", "Section 4", "Section 5"],
+    "heroStyle": "Specific hero approach and why it fits",
+    "ctaStrategy": "CTA approach",
+    "userFlow": "User journey description",
+    "reasoning": "Why this layout serves the content type"
   },
-  "uxReasoning": "3-4 sentences of deep design reasoning. Connect audience psychology to visual choices. Explain the strategic thinking behind the brief as a whole. This should read like a creative director presenting to a client.",
-  "accessibilityNotes": "2-3 specific accessibility considerations for this design",
+  "visualElements": {
+    "heroImage": "What the main hero image/visual should show (be specific to the brand)",
+    "supportingImages": ["What image 1 shows", "What image 2 shows", "What image 3 shows"],
+    "iconStyle": "Icon style description (outline, filled, custom illustration, etc)",
+    "illustrationStyle": "If illustrations are used, what style (flat, 3d, hand-drawn, none)",
+    "brandSymbol": "A symbol or visual element that represents the brand (emoji or description)"
+  },
+  "uxReasoning": "4-5 sentences of deep strategic reasoning. Explain how EVERY visual choice connects back to what the product IS. This should sound like a creative director presenting to a client.",
+  "accessibilityNotes": "Specific accessibility considerations",
   "moodKeywords": ["word1", "word2", "word3", "word4", "word5"],
   "designTokens": {
     "borderRadius": "value with px",
-    "spacing": "base spacing value with px",
-    "shadowStyle": "none, subtle, medium, or dramatic — with reasoning",
-    "animationStyle": "none, subtle, smooth, or energetic — with reasoning"
+    "spacing": "base value with px",
+    "shadowStyle": "description",
+    "animationStyle": "description"
   },
-  "competitiveInsight": "One sentence about how this design differentiates from typical designs in this space",
-  "imagePrompt": "A detailed prompt starting with: A professional UI design mockup showing..."
-}
+  "competitiveInsight": "How this design stands out from competitors in this space",
+  "imagePrompt": "Detailed image generation prompt"
+}`;
 
-IMPORTANT:
-- Every hex code must be valid 6-character hex
-- Color choices must have real psychological reasoning, not generic statements
-- Font choices must be real Google Fonts that actually exist
-- Layout reasoning must connect to user behavior
-- Be opinionated — good design is about strong choices, not safe ones`;
+    const chatCompletion = await groq.chat.completions.create({
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: `Design goal: ${prompt}` }
+      ],
+      model: 'llama-3.1-8b-instant',
+      temperature: 0.65,
+      max_tokens: 3500,
+      response_format: { type: "json_object" }
+    });
 
-        const chatCompletion = await groq.chat.completions.create({
-            messages: [
-                { role: 'system', content: systemPrompt },
-                { role: 'user', content: `Design goal: ${prompt}` }
-            ],
-            model: 'llama-3.1-8b-instant',
-            temperature: 0.65,
-            max_tokens: 3000,
-            response_format: { type: "json_object" }
-        });
+    const raw = chatCompletion.choices[0]?.message?.content;
 
-        const raw = chatCompletion.choices[0]?.message?.content;
-        console.log('Response length:', raw?.length);
-
-        let brief;
-        try {
-            let cleaned = raw.trim().replace(/```json\s*/gi, '').replace(/```\s*/gi, '');
-            const f = cleaned.indexOf('{');
-            const l = cleaned.lastIndexOf('}');
-            if (f !== -1 && l > f) cleaned = cleaned.substring(f, l + 1);
-            brief = JSON.parse(cleaned);
-        } catch (e) {
-            console.error('Parse fail:', e.message);
-            brief = buildFallback();
-        }
-
-        return res.json({ success: true, brief });
-
-    } catch (error) {
-        console.error('Error:', error.message);
-        return res.status(500).json({ error: 'Analysis failed: ' + error.message });
+    let brief;
+    try {
+      let cleaned = raw.trim().replace(/```json\s*/gi, '').replace(/```\s*/gi, '');
+      const f = cleaned.indexOf('{');
+      const l = cleaned.lastIndexOf('}');
+      if (f !== -1 && l > f) cleaned = cleaned.substring(f, l + 1);
+      brief = JSON.parse(cleaned);
+    } catch (e) {
+      console.error('Parse fail:', e.message);
+      brief = buildFallback();
     }
+
+    if (!brief.projectType) brief.projectType = 'landing';
+    if (!brief.visualElements) {
+      brief.visualElements = {
+        heroImage: "Main product or brand visual",
+        supportingImages: ["Feature image 1", "Feature image 2", "Feature image 3"],
+        iconStyle: "Minimal outline",
+        illustrationStyle: "none",
+        brandSymbol: "✦"
+      };
+    }
+
+    return res.json({ success: true, brief });
+
+  } catch (error) {
+    console.error('Error:', error.message);
+    return res.status(500).json({ error: 'Analysis failed: ' + error.message });
+  }
 });
 
-// ============================================
-// GENERATE VISUAL
-// ============================================
 app.post('/api/generate-visual', async (req, res) => {
-    try {
-        const { imagePrompt, colorPalette } = req.body;
-        if (!imagePrompt) return res.status(400).json({ error: 'No prompt.' });
+  try {
+    const { imagePrompt, colorPalette } = req.body;
+    if (!imagePrompt) return res.status(400).json({ error: 'No prompt.' });
+    if (!groq) return res.json({ success: true, visual: { description: 'AI not configured.', prompt: imagePrompt, colors: colorPalette || [] } });
 
-        if (!groq) {
-            return res.json({ success: true, visual: { description: 'AI not configured.', prompt: imagePrompt, colors: colorPalette || [] } });
-        }
+    const completion = await groq.chat.completions.create({
+      messages: [
+        { role: 'system', content: 'Describe a mobile app UI mockup in 5-6 vivid sentences. Be specific about layout, colors, spacing, imagery, icons, and overall feel. Focus on mobile design patterns.' },
+        { role: 'user', content: imagePrompt }
+      ],
+      model: 'llama-3.1-8b-instant',
+      temperature: 0.7,
+      max_tokens: 600
+    });
 
-        const completion = await groq.chat.completions.create({
-            messages: [
-                {
-                    role: 'system',
-                    content: `You are a UI/UX design critic. Given a design mockup prompt, describe what you see in vivid detail across 5-6 sentences. Cover:
-1. Overall layout and composition
-2. Color usage and visual hierarchy
-3. Typography and spacing
-4. Key UI elements and their placement
-5. The emotional impact and user experience feel
-Be specific — mention positions (top-left, centered), sizes (large hero, small caption), and relationships between elements.`
-                },
-                { role: 'user', content: imagePrompt }
-            ],
-            model: 'llama-3.1-8b-instant',
-            temperature: 0.7,
-            max_tokens: 600
-        });
-
-        const description = completion.choices[0]?.message?.content || 'Visual concept generated.';
-        return res.json({ success: true, visual: { description, prompt: imagePrompt, colors: colorPalette || [] } });
-
-    } catch (error) {
-        console.error('Visual error:', error.message);
-        return res.json({ success: true, visual: { description: 'Mockup ready based on palette.', prompt: req.body.imagePrompt || '', colors: req.body.colorPalette || [] } });
-    }
+    const description = completion.choices[0]?.message?.content || 'Visual concept generated.';
+    return res.json({ success: true, visual: { description, prompt: imagePrompt, colors: colorPalette || [] } });
+  } catch (error) {
+    return res.json({ success: true, visual: { description: 'Mockup ready.', prompt: req.body.imagePrompt || '', colors: req.body.colorPalette || [] } });
+  }
 });
 
 function buildFallback() {
-    return {
-        projectTitle: "Design Brief",
-        summary: "Fallback brief — try being more specific in your prompt.",
-        targetAudience: { primary: "General audience", ageRange: "18-45", psychographics: "Design-conscious users", painPoints: "Generic experiences", designImplication: "Clean, universal design language" },
-        toneAndPersonality: { primary: "Modern", secondary: "Clean", brandVoice: "Clear and direct", emotionalGoal: "Trust and clarity", reasoning: "Safe defaults" },
-        colorPalette: [
-            { name: "Primary", hex: "#3b82f6", usage: "Buttons and links", psychology: "Blue conveys trust" },
-            { name: "Secondary", hex: "#1e293b", usage: "Cards and surfaces", psychology: "Dark tones add depth" },
-            { name: "Accent", hex: "#f59e0b", usage: "Highlights", psychology: "Amber draws attention" },
-            { name: "Background", hex: "#0f172a", usage: "Page background", psychology: "Dark reduces eye strain" },
-            { name: "Text", hex: "#f1f5f9", usage: "Body text", psychology: "High contrast for readability" }
-        ],
-        typography: { headingFont: "Inter", bodyFont: "Inter", style: "Clean sans-serif", reasoning: "Universal readability", scale: "1.25" },
-        layoutStructure: { sections: ["Hero", "Features", "About", "Testimonials", "Footer"], heroStyle: "Centered", ctaStrategy: "Primary button", userFlow: "Linear scroll", reasoning: "Standard pattern" },
-        uxReasoning: "Default brief applied. More specific prompts yield better results.",
-        accessibilityNotes: "Ensure 4.5:1 contrast ratio. Use semantic HTML. Test with screen readers.",
-        moodKeywords: ["modern", "clean", "professional", "minimal", "sharp"],
-        designTokens: { borderRadius: "8px", spacing: "16px", shadowStyle: "subtle", animationStyle: "smooth" },
-        competitiveInsight: "A clean foundation to build upon.",
-        imagePrompt: "A professional UI mockup showing a modern landing page"
-    };
+  return {
+    projectTitle: "Design Brief", summary: "Fallback brief.", projectType: "landing",
+    targetAudience: { primary: "General", ageRange: "18-45", psychographics: "Design-conscious", painPoints: "Generic experiences", designImplication: "Clean universal design" },
+    toneAndPersonality: { primary: "Modern", secondary: "Clean", brandVoice: "Clear and direct", emotionalGoal: "Trust", reasoning: "Safe defaults" },
+    colorPalette: [
+      { name: "Primary", hex: "#3b82f6", usage: "Buttons", reasoning: "Trust and action" },
+      { name: "Secondary", hex: "#1e293b", usage: "Cards", reasoning: "Depth" },
+      { name: "Accent", hex: "#f59e0b", usage: "Highlights", reasoning: "Attention" },
+      { name: "Background", hex: "#0f172a", usage: "Page bg", reasoning: "Focus" },
+      { name: "Text", hex: "#f1f5f9", usage: "Body text", reasoning: "Readability" }
+    ],
+    typography: { headingFont: "Inter", bodyFont: "Inter", style: "Clean", reasoning: "Universal", scale: "1.25" },
+    layoutStructure: { sections: ["Hero", "Features", "About", "Testimonials", "Footer"], heroStyle: "Centered", ctaStrategy: "Bold button", userFlow: "Linear", reasoning: "Standard" },
+    visualElements: { heroImage: "Product visual", supportingImages: ["Feature 1", "Feature 2", "Feature 3"], iconStyle: "Outline", illustrationStyle: "none", brandSymbol: "✦" },
+    uxReasoning: "Default brief. Be more specific for better results.",
+    accessibilityNotes: "Ensure 4.5:1 contrast.", moodKeywords: ["modern", "clean", "professional", "minimal", "sharp"],
+    designTokens: { borderRadius: "8px", spacing: "16px", shadowStyle: "subtle", animationStyle: "smooth" },
+    competitiveInsight: "Clean foundation.", imagePrompt: "A professional mobile UI mockup"
+  };
 }
 
 app.listen(PORT, () => console.log(`Aurora API on port ${PORT}`));
