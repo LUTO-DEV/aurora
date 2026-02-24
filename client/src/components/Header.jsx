@@ -47,17 +47,6 @@ function Header({ step }) {
                         ))}
                     </div>
                 </div>
-
-                {step === 0 && (
-                    <div className="text-center enter px-2">
-                        <h2 className="text-xl sm:text-3xl font-semibold tracking-tight leading-tight gradient-text">
-                            Think before you design.
-                        </h2>
-                        <p className="text-xs sm:text-sm mt-2 sm:mt-3 max-w-md mx-auto font-light leading-relaxed" style={{ color: '#71717a' }}>
-                            Aurora analyzes your design goal and builds a strategic brief — like a creative director would.
-                        </p>
-                    </div>
-                )}
             </div>
         </header>
     )

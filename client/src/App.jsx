@@ -62,36 +62,67 @@ function App() {
   const handleSave = () => { saveProject(lastPrompt); showToast('Project saved') }
   const handleReset = () => { reset(); setLastPrompt(''); setShowCode(false) }
 
+  // Logic to determine if we should be in "Hero Center" mode
+  const isHome = !brief && !loading && !error;
+
   return (
-    <div className="min-h-screen relative">
+    <div className="min-h-[100dvh] flex flex-col relative overflow-x-hidden bg-[#09090b] text-white">
       <Sidebar onAnalyze={analyze} />
 
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-48 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full"
-          style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.015) 0%, transparent 70%)' }}></div>
+        <div className="absolute -top-48 left-1/2 -translate-x-1/2 w-[800px] h-[800px] rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%)' }}></div>
       </div>
 
-      <div className="relative z-10">
+      <div className="relative z-10 flex-1 flex flex-col">
         <Header step={step} />
 
-        <main className="max-w-3xl mx-auto px-5 sm:px-8 pb-32">
-          <PromptInput onAnalyze={analyze} loading={loading} onReset={handleReset} hasBrief={!!brief} />
+        {/* FIX: Conditional centering. 
+            If isHome is true, we use justify-center to put the input in the middle of the screen.
+        */}
+        <main className={`flex-1 w-full max-w-full md:max-w-3xl mx-auto px-6 sm:px-8 flex flex-col ${isHome ? 'justify-center pb-32' : 'pt-4 pb-20'}`}>
 
-          {error && (
-            <div className="mt-8 p-4 text-center fade" style={{ background: '#131316', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '20px' }}>
-              <p className="text-red-400 text-sm opacity-70">{error}</p>
-              <p className="text-xs mt-2" style={{ color: '#3f3f46' }}>Make sure backend is running at {API}</p>
+          {isHome && (
+            <div className="text-center mb-10 animate-in fade-in zoom-in duration-1000">
+              {/* BUMPED FONT SIZE: text-6xl on mobile, text-9xl on desktop */}
+              <h1 className="text-6xl md:text-9xl font-medium tracking-tighter mb-4 bg-gradient-to-b from-white to-white/40 bg-clip-text text-transparent">
+                Aurora
+              </h1>
+              <p className="text-lg md:text-2xl text-zinc-500 font-light tracking-wide">
+                Think before you <span className="text-white">design.</span>
+              </p>
             </div>
           )}
 
-          {loading && <LoadingState text="Thinking through your design..." />}
+          <div className="w-full">
+            <PromptInput
+              onAnalyze={analyze}
+              loading={loading}
+              onReset={handleReset}
+              hasBrief={!!brief}
+            />
+          </div>
+
+          {error && (
+            <div className="mt-8 p-6 text-center rounded-[24px] border border-red-500/20 bg-red-500/5">
+              <p className="text-red-400 text-sm font-medium">{error}</p>
+            </div>
+          )}
+
+          {loading && (
+            <div className="py-20">
+              <LoadingState text="Thinking through your design..." />
+            </div>
+          )}
 
           {brief && !loading && (
-            <DesignBreakdown
-              brief={brief} visual={visual}
-              onSave={handleSave} showToast={showToast}
-              onShowCode={() => setShowCode(!showCode)} showingCode={showCode}
-            />
+            <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
+              <DesignBreakdown
+                brief={brief} visual={visual}
+                onSave={handleSave} showToast={showToast}
+                onShowCode={() => setShowCode(!showCode)} showingCode={showCode}
+              />
+            </div>
           )}
 
           {showCode && brief && <ExportCode brief={brief} showToast={showToast} />}
@@ -99,8 +130,8 @@ function App() {
           {visual && !visualLoading && <VisualConcept visual={visual} brief={brief} />}
         </main>
 
-        <footer className="text-center py-10" style={{ borderTop: '1px solid #232329' }}>
-          <p className="text-xs tracking-widest uppercase" style={{ color: '#3f3f46' }}>Aurora · Hackathon 2026</p>
+        <footer className="mt-auto text-center py-10 w-full border-t border-white/5">
+          <p className="text-[10px] tracking-[0.3em] uppercase opacity-20">Aurora · Hackathon 2026</p>
         </footer>
       </div>
 
