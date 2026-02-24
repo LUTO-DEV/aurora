@@ -100,7 +100,7 @@ function App() {
         </main>
 
         <footer className="text-center py-10" style={{ borderTop: '1px solid #232329' }}>
-          <p className="text-xs tracking-widest uppercase" style={{ color: '#3f3f46' }}>Aurora · Hackathon 2025</p>
+          <p className="text-xs tracking-widest uppercase" style={{ color: '#3f3f46' }}>Aurora · Hackathon 2026</p>
         </footer>
       </div>
 
