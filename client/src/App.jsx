@@ -9,7 +9,6 @@ import Toast from './components/Toast'
 import useStore from './store'
 import { useState } from 'react'
 
-// Backend URL - change this to your Render backend URL after deploying
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001'
 
 function App() {
@@ -31,24 +30,19 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt })
       })
-
       if (!res.ok) {
-        const errData = await res.json().catch(() => ({ error: 'Server error' }))
-        throw new Error(errData.error || `Server error ${res.status}`)
+        const err = await res.json().catch(() => ({ error: `Server error ${res.status}` }))
+        throw new Error(err.error || 'Request failed')
       }
-
       const data = await res.json()
-      if (!data.success || !data.brief) throw new Error('Invalid response from server')
-
+      if (!data.success || !data.brief) throw new Error('Invalid server response')
       setBrief(data.brief); setStep(2)
       generateVisual(data.brief.imagePrompt, data.brief.colorPalette)
     } catch (err) {
-      console.error('Analyze failed:', err)
+      console.error('Analyze:', err)
       setError(err.message)
       setStep(0)
-    } finally {
-      setLoading(false)
-    }
+    } finally { setLoading(false) }
   }
 
   const generateVisual = async (imagePrompt, colorPalette) => {
@@ -61,7 +55,7 @@ function App() {
       })
       const data = await res.json()
       if (data.success) { setVisual(data.visual); setStep(3) }
-    } catch (err) { console.error('Visual failed:', err) }
+    } catch (err) { console.error('Visual:', err) }
     finally { setVisualLoading(false) }
   }
 
@@ -73,7 +67,8 @@ function App() {
       <Sidebar onAnalyze={analyze} />
 
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-48 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.015) 0%, transparent 70%)' }}></div>
+        <div className="absolute -top-48 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.015) 0%, transparent 70%)' }}></div>
       </div>
 
       <div className="relative z-10">
@@ -83,9 +78,9 @@ function App() {
           <PromptInput onAnalyze={analyze} loading={loading} onReset={handleReset} hasBrief={!!brief} />
 
           {error && (
-            <div className="mt-8 p-4 rounded-2xl text-center fade" style={{ background: '#131316', border: '1px solid rgba(239,68,68,0.2)' }}>
+            <div className="mt-8 p-4 text-center fade" style={{ background: '#131316', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '20px' }}>
               <p className="text-red-400 text-sm opacity-70">{error}</p>
-              <p className="text-xs mt-2" style={{ color: '#3f3f46' }}>Check that your backend is running</p>
+              <p className="text-xs mt-2" style={{ color: '#3f3f46' }}>Make sure backend is running at {API}</p>
             </div>
           )}
 
@@ -93,16 +88,13 @@ function App() {
 
           {brief && !loading && (
             <DesignBreakdown
-              brief={brief}
-              onSave={handleSave}
-              showToast={showToast}
-              onShowCode={() => setShowCode(!showCode)}
-              showingCode={showCode}
+              brief={brief} visual={visual}
+              onSave={handleSave} showToast={showToast}
+              onShowCode={() => setShowCode(!showCode)} showingCode={showCode}
             />
           )}
 
           {showCode && brief && <ExportCode brief={brief} showToast={showToast} />}
-
           {visualLoading && <LoadingState text="Crafting visual concept..." />}
           {visual && !visualLoading && <VisualConcept visual={visual} brief={brief} />}
         </main>
